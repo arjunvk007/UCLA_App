@@ -95,7 +95,7 @@ NumPy
 ## 🌩 Deployment
 
 Local Environment: http://localhost:8501/
-Git hub: https://uclaapp-arjunvk.streamlit.app/
+Git hub: [https://uclaapp-arjunvk.streamlit.app/](https://uclaapp-arjunvk.streamlit.app/)
 ---
 
 ## 📜 License
