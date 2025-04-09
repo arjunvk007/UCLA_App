@@ -53,5 +53,4 @@ if st.button("🔮 Predict Admission"):
     st.subheader("📢 Prediction Result:")
     st.markdown(f"### {label}")
     
-    st.subheader("📈 Feature Overview:")
-    st.bar_chart(input_df.T.rename(columns={0: 'Value'}))
+ 
