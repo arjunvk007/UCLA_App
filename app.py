@@ -1,6 +1,5 @@
 import streamlit as st
 import joblib
-import numpy as np
 import pandas as pd
 import os
 
@@ -15,42 +14,41 @@ if not os.path.exists(model_path):
 
 model = joblib.load(model_path)
 
-# Input form
-st.subheader("📋 Enter your academic profile:")
+# Read admission input data from CSV
+csv_path = 'Admission(in).csv'
+if not os.path.exists(csv_path):
+    st.error("❌ Input file 'Admission(in).csv' not found in the directory.")
+    st.stop()
 
-gre = st.slider("GRE Score", 260, 340, 310)
-toefl = st.slider("TOEFL Score", 0, 120, 100)
-rating = st.selectbox("University Rating", [1, 2, 3, 4, 5], index=2)
-sop = st.slider("SOP Strength (1-5)", 1.0, 5.0, 3.0, step=0.5)
-lor = st.slider("LOR Strength (1-5)", 1.0, 5.0, 3.0, step=0.5)
-cgpa = st.slider("CGPA (out of 10)", 6.0, 10.0, 8.5, step=0.1)
-research = st.radio("Research Experience", ["Yes", "No"]) == "Yes"
+st.subheader("📄 Reading admission data from `Admission(in).csv`")
+try:
+    input_df = pd.read_csv(csv_path)
 
-# One-hot encode University_Rating and Research
-input_dict = {
-    "GRE_Score": gre,
-    "TOEFL_Score": toefl,
-    "SOP": sop,
-    "LOR": lor,
-    "CGPA": cgpa,
-    "University_Rating_2": 1 if rating == 2 else 0,
-    "University_Rating_3": 1 if rating == 3 else 0,
-    "University_Rating_4": 1 if rating == 4 else 0,
-    "University_Rating_5": 1 if rating == 5 else 0,
-    "Research_1": 1 if research else 0
-}
+    # One-hot encode University_Rating and Research
+    input_df["University_Rating_2"] = (input_df["University_Rating"] == 2).astype(int)
+    input_df["University_Rating_3"] = (input_df["University_Rating"] == 3).astype(int)
+    input_df["University_Rating_4"] = (input_df["University_Rating"] == 4).astype(int)
+    input_df["University_Rating_5"] = (input_df["University_Rating"] == 5).astype(int)
+    input_df["Research_1"] = (input_df["Research"].map(lambda x: str(x).lower() in ['yes', '1', 'true'])).astype(int)
 
-# Convert to DataFrame
-input_df = pd.DataFrame([input_dict])
+    # Drop original columns not used in model
+    input_df = input_df.drop(columns=["University_Rating", "Research"], errors='ignore')
 
-# Ensure feature alignment
-input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
+    # Align columns to match model input
+    input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
 
-if st.button("🔮 Predict Admission"):
-    prediction = model.predict(input_df)[0]
-    label = "🎉 High Chance of Admission!" if prediction == 1 else "❌ Low Chance of Admission"
+    st.write("📋 Processed input data:")
+    st.dataframe(input_df)
 
-    st.subheader("📢 Prediction Result:")
-    st.markdown(f"### {label}")
+    if st.button("🔮 Predict Admission"):
+        predictions = model.predict(input_df)
+        input_df["Prediction"] = ["🎉 High Chance" if pred == 1 else "❌ Low Chance" for pred in predictions]
+
+        st.subheader("📢 Prediction Results:")
+        st.dataframe(input_df[["Prediction"]])
+
+except Exception as e:
+    st.error(f"⚠️ Error reading or processing file: {e}")
+
     
  
